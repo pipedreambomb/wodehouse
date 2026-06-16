@@ -10,7 +10,7 @@ books = json.loads(response.content)
 downloadUrls = pipe(
     books['results'],
     pluck('formats'),
-    map(lambda book: (url for format, url in book.items() if format.startswith('text/plain'))),
+    map(lambda format: (downloadUrl for mimeType, downloadUrl in format.items() if mimeType.startswith('text/plain'))),
     # take one, as sometimes there's more than one plain text format per book, e.g. UTF-8 and ASCII
     map(first),
     # flatten
