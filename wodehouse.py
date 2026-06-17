@@ -1,20 +1,38 @@
-from toolz.curried import pipe, pluck, map, first
-import json
-from requests import request
+import requests
+from toolz.curried import first, map, pipe, pluck
 
-response = request('get', 'https://gutendex.com/books?search=wodehouse')
 
-# TODO this is only the first page! we need all the Wodehouse.
-books = json.loads(response.content)
+next_page_url = 'https://gutendex.com/books?search=wodehouse'
+results = []
 
-downloadUrls = pipe(
-    books['results'],
+while next_page_url:
+    response = requests.get(next_page_url)
+    response_content = response.json()
+
+    results.extend(response_content['results'])
+    next_page_url = response_content.get('next')
+
+wodehouse_books = [
+    book
+    for book in results
+    if "Wodehouse" in book['authors'][0]['name']
+]
+
+download_urls = pipe(
+    wodehouse_books,
     pluck('formats'),
-    map(lambda format: (downloadUrl for mimeType, downloadUrl in format.items() if mimeType.startswith('text/plain'))),
+    map(
+        lambda book_format: (
+            download_url
+            for mime_type, download_url in book_format.items()
+            if mime_type.startswith('text/plain')
+        )
+    ),
     # take one, as sometimes there's more than one plain text format per book, e.g. UTF-8 and ASCII
     map(first),
     # flatten
     list
 )
 
-print(downloadUrls)
+print(download_urls)
+print(f"found {len(download_urls)} books")
