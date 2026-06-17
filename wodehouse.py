@@ -1,6 +1,4 @@
 import requests
-from toolz.curried import first, map, pipe, pluck
-
 
 next_page_url = 'https://gutendex.com/books?search=wodehouse'
 results = []
