@@ -12,27 +12,14 @@ while next_page_url:
     results.extend(response_content['results'])
     next_page_url = response_content.get('next')
 
-wodehouse_books = [
-    book
+download_urls = {
+    book['title']: download_url
     for book in results
-    if "Wodehouse" in book['authors'][0]['name']
-]
-
-download_urls = pipe(
-    wodehouse_books,
-    pluck('formats'),
-    map(
-        lambda book_format: (
-            download_url
-            for mime_type, download_url in book_format.items()
-            if mime_type.startswith('text/plain')
-        )
-    ),
-    # take one, as sometimes there's more than one plain text format per book, e.g. UTF-8 and ASCII
-    map(first),
-    # flatten
-    list
-)
+    if any("Wodehouse, P. G. (Pelham Grenville)" == author['name'] 
+        for author in book['authors'])
+    for mime_type, download_url in book['formats'].items()
+    if mime_type.startswith('text/plain')
+}
 
 print(download_urls)
 print(f"found {len(download_urls)} books")
